@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zunivo Docs — x402 payments on Arc</title>
+<meta name="description" content="Integrate x402 payments on Arc. Charge USDC per API call; let AI agents pay autonomously. Server middleware + agent client, settled on Arc Testnet." />
+<link rel="icon" type="image/svg+xml" href="https://zunivo.io/favicon.svg" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --paper:#F6F4EF;--paper2:#EFECE4;--ink:#101319;--ink2:#3A3F4B;--mute:#6B7180;
+  --hair:#DCD8CE;--hair2:#C9C4B7;--indigo:#3D5AFE;--mint:#0B8F63;--mint-l:#10C48B;
+  --code-bg:#0B1220;--code-ink:#DDE3F3;
+  --disp:'Space Grotesk',sans-serif;--body:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--paper);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--indigo);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+::selection{background:var(--indigo);color:#fff}
+code{font-family:var(--mono);font-size:.9em;background:var(--paper2);padding:2px 6px;border-radius:5px;color:var(--ink)}
+pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:22px 24px;overflow-x:auto;margin:18px 0;font-family:var(--mono);font-size:13.5px;line-height:1.75}
+pre code{background:none;padding:0;color:inherit;font-size:inherit}
+.k{color:#C792EA}.s{color:#C3E88D}.f{color:#82AAFF}.c{color:#6B7690}.n{color:#F78C6C}
+
+/* layout */
+.shell{display:grid;grid-template-columns:260px 1fr;max-width:1200px;margin:0 auto;min-height:100vh}
+aside{border-right:1px solid var(--hair);padding:30px 24px;position:sticky;top:0;height:100vh;overflow-y:auto}
+aside .brand{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:19px;margin-bottom:6px}
+aside .tagline{font-family:var(--mono);font-size:11px;color:var(--mute);letter-spacing:.04em;margin-bottom:28px}
+aside nav a{display:block;color:var(--ink2);font-size:14px;padding:7px 0;border:0}
+aside nav a:hover{color:var(--indigo);text-decoration:none}
+aside nav .grp{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:22px 0 8px}
+aside nav .grp:first-child{margin-top:0}
+main{padding:56px 64px 120px;max-width:820px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--mute)}
+.eyebrow::before{content:"{ "}.eyebrow::after{content:" }"}
+h1{font-family:var(--disp);font-weight:700;font-size:46px;letter-spacing:-.025em;line-height:1.08;margin:14px 0 18px}
+h2{font-family:var(--disp);font-weight:700;font-size:27px;letter-spacing:-.02em;margin:52px 0 14px;padding-top:20px;border-top:1px solid var(--hair)}
+h3{font-family:var(--disp);font-weight:600;font-size:18px;margin:28px 0 10px}
+p{margin:12px 0;color:var(--ink2)}
+p strong,li strong{color:var(--ink)}
+ul,ol{margin:12px 0 12px 22px;color:var(--ink2)}
+li{margin:7px 0}
+.lead{font-size:19px;color:var(--ink2);margin:16px 0 8px}
+.callout{border:1px solid var(--hair2);border-left:3px solid var(--indigo);background:#FBFAF7;border-radius:10px;padding:16px 20px;margin:20px 0;font-size:14.5px}
+.callout.warn{border-left-color:var(--n,#E8A23D)}
+.callout .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);display:block;margin-bottom:6px}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--hair2);color:var(--ink2);margin-right:6px}
+.pill.ok{border-color:var(--mint);color:var(--mint)}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--hair)}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+td code{font-size:12.5px}
+.flow{counter-reset:s;margin:18px 0}
+.flow .step{position:relative;padding-left:44px;margin:16px 0}
+.flow .step::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:13px;display:grid;place-items:center}
+footer{border-top:1px solid var(--hair);margin-top:60px;padding-top:24px;font-size:13px;color:var(--mute)}
+.topbar{display:none}
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  aside{display:none}
+  main{padding:32px 22px 80px}
+  h1{font-size:34px}
+  .topbar{display:flex;align-items:center;gap:8px;padding:16px 22px;border-bottom:1px solid var(--hair);font-family:var(--disp);font-weight:700;position:sticky;top:0;background:var(--paper);z-index:10}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <svg width="24" height="18" viewBox="0 0 152 112"><rect x="20" y="20" width="72" height="14" rx="7" fill="#3D5AFE"/><line x1="82" y1="41" x2="30" y2="81" stroke="#10C48B" stroke-width="14" stroke-linecap="round"/><circle cx="30" cy="81" r="5" fill="#0B8F63"/><rect x="20" y="88" width="72" height="14" rx="7" fill="#3D5AFE"/></svg>
+  Zunivo Docs
+</div>
+<div class="shell">
+  <aside>
+    <div class="brand">
+      <svg width="26" height="19" viewBox="0 0 152 112"><rect x="20" y="20" width="72" height="14" rx="7" fill="#3D5AFE"/><line x1="82" y1="41" x2="30" y2="81" stroke="#10C48B" stroke-width="14" stroke-linecap="round"/><circle cx="30" cy="81" r="5" fill="#0B8F63"/><rect x="20" y="88" width="72" height="14" rx="7" fill="#3D5AFE"/></svg>
+      zunivo
+    </div>
+    <div class="tagline">docs · x402 on arc</div>
+    <nav>
+      <div class="grp">start</div>
+      <a href="#what">What is this</a>
+      <a href="#how">How x402 works</a>
+      <a href="#quickstart">Quickstart</a>
+      <div class="grp">server</div>
+      <a href="#server">Charge per call</a>
+      <a href="#requirements">PaymentRequirements</a>
+      <div class="grp">agent</div>
+      <a href="#agent">Pay automatically</a>
+      <div class="grp">reference</div>
+      <a href="#backends">Two settlement backends</a>
+      <a href="#eip3009">EIP-3009 (gasless)</a>
+      <a href="#decimals">Decimals on Arc</a>
+      <a href="#mainnet">Going to mainnet</a>
+      <a href="#arc">Arc constants</a>
+    </nav>
+  </aside>
+
+  <main>
+    <p class="eyebrow">zunivo · the payment layer for ai agents on arc</p>
+    <h1>x402 payments on Arc</h1>
+    <p class="lead">Charge USDC per API call. Let AI agents pay for it autonomously — no card, no account, no human. Standard <a href="https://github.com/coinbase/x402" target="_blank" rel="noreferrer">x402</a> on Arc's USDC-native chain.</p>
+    <p><span class="pill ok">server middleware</span><span class="pill ok">agent client</span><span class="pill">EIP-3009 facilitator</span><span class="pill">Arc Testnet</span></p>
+
+    <h2 id="what">What is this</h2>
+    <p><strong>x402</strong> is the HTTP-native payment standard that revives the dormant <code>402 Payment Required</code> status code. A server answers a request with <code>402</code> and a machine-readable price; a client attaches a signed payment and retries; the resource is served. It's governed by the Linux Foundation and backed by Coinbase, Circle, Visa, Stripe, and Google — tens of millions of agent payments already run on it.</p>
+    <p>But its facilitators cover Base, Polygon, Arbitrum, and Solana — <strong>not Arc</strong>. <code>zunivo-x402-arc</code> is that missing piece: it lets an x402-speaking agent pay for an API <strong>on Arc</strong>, using Arc's USDC-native gas and sub-second finality. Same standard the agent already knows; a new chain it can now pay on.</p>
+
+    <h2 id="how">How x402 works</h2>
+    <div class="flow">
+      <div class="step"><strong>Request.</strong> An agent calls a priced endpoint like any HTTP request.</div>
+      <div class="step"><strong>402.</strong> The server replies <code>402 Payment Required</code> with <code>PaymentRequirements</code>: price, token, recipient, network.</div>
+      <div class="step"><strong>Pay.</strong> The agent pays in USDC on Arc — either by settling a Zunivo order through our verified router, or (advanced) by signing an EIP-3009 authorization.</div>
+      <div class="step"><strong>Retry with proof.</strong> The agent resends the request with an <code>X-PAYMENT</code> header.</div>
+      <div class="step"><strong>Serve.</strong> The server verifies settlement, returns the data, and adds an <code>X-PAYMENT-RESPONSE</code> receipt header.</div>
+    </div>
+
+    <h2 id="quickstart">Quickstart</h2>
+    <pre><code><span class="c"># install</span>
+npm install zunivo-x402-arc
+
+<span class="c"># run a paid API (needs a Zunivo API key from https://api.zunivo.io)</span>
+ZUNIVO_API=https://api.zunivo.io ZUNIVO_KEY=zk_… PAY_TO=you.agent npm run example:server
+
+<span class="c"># in another terminal, an agent pays it — one command, one function</span>
+AGENT_PK=0x… npm run example:agent</code></pre>
+
+    <h2 id="server">Server — charge USDC per call</h2>
+    <p>Three lines protect any Express route:</p>
+    <pre><code><span class="k">import</span> express <span class="k">from</span> <span class="s">"express"</span>;
+<span class="k">import</span> { paymentRequired } <span class="k">from</span> <span class="s">"zunivo-x402-arc"</span>;
+
+<span class="k">const</span> app = <span class="f">express</span>();
+<span class="k">const</span> pay = <span class="f">paymentRequired</span>({
+  price: <span class="s">"0.05"</span>,              <span class="c">// human USDC</span>
+  payTo: <span class="s">"you.agent"</span>,         <span class="c">// a .agent name or 0x address</span>
+  zunivoApi: <span class="s">"https://api.zunivo.io"</span>,
+  zunivoKey: process.env.ZUNIVO_KEY,
+});
+
+app.<span class="f">get</span>(<span class="s">"/v1/data"</span>, pay, (req, res) =&gt; res.<span class="f">json</span>({ premium: <span class="s">"…"</span> }));</code></pre>
+    <p>Unpaid requests receive a spec-compliant <code>402</code>. Paid requests pass through with an <code>X-PAYMENT-RESPONSE</code> receipt header. Each payment is consumed exactly once.</p>
+
+    <h3 id="requirements">The 402 a client sees</h3>
+    <pre><code>{
+  <span class="s">"x402Version"</span>: <span class="n">1</span>,
+  <span class="s">"accepts"</span>: [{
+    <span class="s">"scheme"</span>: <span class="s">"exact"</span>,
+    <span class="s">"network"</span>: <span class="s">"arc-testnet"</span>,
+    <span class="s">"maxAmountRequired"</span>: <span class="s">"50000"</span>,        <span class="c">// 0.05 USDC in 6-decimal base units</span>
+    <span class="s">"asset"</span>: <span class="s">"0x3600000000000000000000000000000000000000"</span>,
+    <span class="s">"payTo"</span>: <span class="s">"you.agent"</span>,
+    <span class="s">"maxTimeoutSeconds"</span>: <span class="n">120</span>,
+    <span class="s">"extra"</span>: {
+      <span class="s">"name"</span>: <span class="s">"USDC"</span>, <span class="s">"decimals"</span>: <span class="n">6</span>, <span class="s">"chainId"</span>: <span class="n">5042002</span>,
+      <span class="s">"zunivoOrderId"</span>: <span class="s">"02e2b580-…"</span>,     <span class="c">// order minted for this call — pay it, then retry with proof</span>
+      <span class="s">"payToAddress"</span>: <span class="s">"0x6963…90c8"</span>,     <span class="c">// payTo resolved to its 20-byte address — settle to THIS, not the name</span>
+      <span class="s">"payUrl"</span>: <span class="s">"https://app.zunivo.io/pay?oid=…"</span>  <span class="c">// human-payable fallback for the same order</span>
+    }
+  }]
+}</code></pre>
+    <div class="callout" style="--n:#3D5AFE"><span class="lbl">writing your own client?</span>Settle to <code>extra.payToAddress</code> (the resolved 20-byte address), never to <code>payTo</code> when it is a <code>.agent</code> name — the chain only accepts addresses. Our SDK client does this for you since <code>0.1.1</code>.</div>
+
+    <h2 id="agent">Agent — pay automatically</h2>
+    <p>The whole dance — discover price, pay on Arc, retry with proof — is one wrapped <code>fetch</code>:</p>
+    <pre><code><span class="k">import</span> { createX402Fetch } <span class="k">from</span> <span class="s">"zunivo-x402-arc/client"</span>;
+
+<span class="k">const</span> x402fetch = <span class="f">createX402Fetch</span>({
+  privateKey: process.env.AGENT_PK,
+  maxPrice: <span class="s">"1"</span>,                  <span class="c">// refuse anything pricier (optional guard)</span>
+  onEvent: (e) =&gt; <span class="f">console</span>.<span class="f">log</span>(e.type),
+});
+
+<span class="k">const</span> res = <span class="k">await</span> <span class="f">x402fetch</span>(<span class="s">"https://api.example.dev/v1/data"</span>);
+<span class="k">const</span> data = <span class="k">await</span> res.<span class="f">json</span>();   <span class="c">// paid for, on-chain, no human</span></code></pre>
+
+    <h2 id="backends">Two settlement backends</h2>
+    <p>The middleware's <code>verify</code> is pluggable. Two paths ship:</p>
+    <table>
+      <tr><th>Backend</th><th>How it settles</th><th>Status</th></tr>
+      <tr><td><strong>Zunivo orders</strong> (default)</td><td>Payment settles through our verified Arc router <code>0x4210…Ea55</code>. <code>X-PAYMENT</code> payload is <code>{ zunivoOrderId }</code>.</td><td><span class="pill ok">works today</span></td></tr>
+      <tr><td><strong>EIP-3009 facilitator</strong></td><td>Agent signs a <code>TransferWithAuthorization</code>; the facilitator submits it to Arc's USDC. Fully standard, gasless.</td><td><span class="pill">reference</span></td></tr>
+    </table>
+    <div class="callout"><span class="lbl">why two</span>The Zunivo-order backend needs no new on-chain code and is verified end-to-end today. The EIP-3009 path is the purest x402 scheme; it's provided as a reference so standard agents interoperate, pending on-chain confirmation of Arc USDC's 3009 selectors.</div>
+
+    <h2 id="eip3009">EIP-3009 (gasless, advanced)</h2>
+    <p>Arc's USDC is issued by Circle and supports <a href="https://eips.ethereum.org/EIPS/eip-3009" target="_blank" rel="noreferrer">EIP-3009</a> (<code>TransferWithAuthorization</code>) — the same mechanism x402 uses elsewhere. The agent signs off-chain; a facilitator submits on-chain; no prior approval, no gas for the agent.</p>
+    <pre><code><span class="k">import</span> { signPayment, createFacilitator } <span class="k">from</span> <span class="s">"zunivo-x402-arc/facilitator"</span>;
+
+<span class="c">// agent side — sign, no gas, no transaction</span>
+<span class="k">const</span> payload = <span class="k">await</span> <span class="f">signPayment</span>({ privateKey, to: <span class="s">"you.agent"</span>, price: <span class="s">"0.05"</span> });
+
+<span class="c">// facilitator side — verify signature, then submit to Arc USDC</span>
+<span class="k">const</span> fac = <span class="f">createFacilitator</span>({ submitterKey });
+<span class="k">const</span> { settled, txHash } = <span class="k">await</span> fac.<span class="f">settle</span>(payload);</code></pre>
+    <div class="callout warn" style="--n:#E8A23D"><span class="lbl">before production</span>Confirm Arc's USDC (<code>0x3600…0000</code>) exposes the <code>transferWithAuthorization</code> / <code>receiveWithAuthorization</code> selectors and its EIP-712 domain (<code>name</code>, <code>version</code>) on-chain. Until then, use the Zunivo-order backend as the tested path.</div>
+
+    <h2 id="decimals">Decimals on Arc (read this)</h2>
+    <div class="callout warn" style="--n:#E8A23D"><span class="lbl">critical</span>Arc's <strong>native USDC gas token uses 18 decimals</strong>; the <strong>USDC ERC-20 interface uses 6 decimals</strong>. x402 amounts are ERC-20 amounts → always 6 decimals. Mixing them mis-scales a payment by 10¹². This library keeps the two paths strictly separate; if you compute amounts yourself, use <code>toUsdcBaseUnits()</code> / <code>fromUsdcBaseUnits()</code>.</div>
+
+    <h2 id="mainnet">Going to mainnet (money-safety)</h2>
+    <p>On testnet the SDK defaults are convenient. On <strong>mainnet you are moving real USDC</strong>, so the library refuses unsafe defaults and requires you to opt in to three guards explicitly. Zunivo is non-custodial — funds move wallet → on-chain router → recipient; the platform never holds them — but these guards protect against the mistakes and hostile inputs that <em>can</em> cost real money.</p>
+
+    <div class="callout warn" style="--n:#E8A23D"><span class="lbl">before real money</span>Two gates are <strong>not</strong> covered by this library and must be cleared first: an <strong>independent security audit</strong> of the SDK and the on-chain contracts, and <strong>on-chain confirmation of the EIP-3009 path on Arc mainnet</strong>. Until the 3009 path is confirmed, keep it disabled and settle via the Zunivo-order router backend.</div>
+
+    <h3 id="mn-network">1. Select the network explicitly</h3>
+    <p>Nothing is hardcoded to one environment. Pass <code>network</code> on both the server and the agent. The SDK <strong>refuses to run on <code>"arc"</code> until the mainnet constants (chain id, RPC, USDC address, router) are filled in</strong> from Arc's mainnet docs — a half-configured mainnet can never silently move funds. The agent also rejects a 402 whose <code>network</code> doesn't match its own, so it can't be tricked onto the wrong chain.</p>
+    <pre><code><span class="c">// server</span>
+<span class="k">const</span> pay = <span class="f">paymentRequired</span>({ price: <span class="s">"0.05"</span>, payTo: <span class="s">"you.agent"</span>, network: <span class="s">"arc"</span>, consumedStore });
+
+<span class="c">// agent</span>
+<span class="k">const</span> x402fetch = <span class="f">createX402Fetch</span>({ privateKey, network: <span class="s">"arc"</span>, expectRecipient });</code></pre>
+
+    <h3 id="mn-store">2. Provide a durable replay store</h3>
+    <p>The default replay guard is in-memory and single-process — fine for testnet, unsafe for a real deployment (a restart or a second instance would let one payment be consumed twice). On mainnet the middleware <strong>throws unless you pass a shared, durable <code>consumedStore</code></strong> (Redis, a database, etc). Any object with an atomic <code>reserve(key) → boolean</code> (returns true only the first time) works.</p>
+    <pre><code><span class="k">const</span> consumedStore = {
+  <span class="k">async</span> <span class="f">reserve</span>(key) { <span class="c">// return true iff this key was never seen (atomic, e.g. Redis SET NX)</span>
+    <span class="k">return</span> <span class="k">await</span> redis.<span class="f">set</span>(key, <span class="s">"1"</span>, <span class="s">"NX"</span>) === <span class="s">"OK"</span>;
+  },
+};</code></pre>
+
+    <h3 id="mn-recipient">3. Pin the recipient the agent expects</h3>
+    <p>The paid endpoint tells the agent which address to pay. A compromised or malicious server could name an attacker's address. If your agent knows who it intends to pay, pass <code>expectRecipient</code> — the client refuses to settle to any other address. Set <code>requireExpectRecipient: true</code> to make that pin mandatory.</p>
+    <pre><code><span class="k">const</span> x402fetch = <span class="f">createX402Fetch</span>({
+  privateKey, network: <span class="s">"arc"</span>,
+  expectRecipient: <span class="s">"0x…"</span>,          <span class="c">// refuse to pay anyone else</span>
+  requireExpectRecipient: <span class="k">true</span>,   <span class="c">// and refuse to run without a pin</span>
+});</code></pre>
+
+    <div class="callout" style="--n:#3D5AFE"><span class="lbl">also re-confirm on mainnet</span>Don't assume mainnet equals testnet: verify Arc mainnet's chain id, RPC, USDC ERC-20 address and its decimals on-chain before filling the mainnet config. A wrong decimals assumption mis-scales every amount.</div>
+
+    <h2 id="arc">Arc Testnet constants</h2>
+    <table>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Chain ID</td><td><code>5042002</code></td></tr>
+      <tr><td>RPC</td><td><code>https://rpc.testnet.arc.network</code></td></tr>
+      <tr><td>Explorer</td><td><code>https://testnet.arcscan.app</code></td></tr>
+      <tr><td>USDC (ERC-20, 6 dp)</td><td><code>0x3600000000000000000000000000000000000000</code></td></tr>
+      <tr><td>Zunivo router</td><td><code>0x4210D40a9899e42b4946B9dC7E0C35d3cf14Ea55</code></td></tr>
+      <tr><td>Zunivo names (.agent)</td><td><code>0x244e0c8bE1Ed59636901F98920413d414B158cc5</code></td></tr>
+      <tr><td>x402 network id</td><td><code>arc-testnet</code></td></tr>
+      <tr><td>Faucet</td><td><a href="https://faucet.circle.com/" target="_blank" rel="noreferrer">faucet.circle.com</a></td></tr>
+    </table>
+
+    <footer>
+      <p>Zunivo — the payment layer for AI agents on Arc · <a href="https://zunivo.io">zunivo.io</a> · <a href="https://github.com/zunivo-pay" target="_blank" rel="noreferrer">github.com/zunivo-pay</a> · non-custodial software, not a money transmitter</p>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
