@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Zunivo Docs — x402 payments on Arc</title>
-<meta name="description" content="Integrate x402 payments on Arc. Charge USDC per API call; let AI agents pay autonomously. Server middleware + agent client, settled on Arc Testnet." />
+<meta name="description" content="Integrate x402 payments on Arc. Charge USDC per API call; let AI agents pay autonomously. Server middleware + agent client, settled on Arc mainnet (testnet sandbox included)." />
 <link rel="icon" type="image/svg+xml" href="https://zunivo.io/favicon.svg" />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
@@ -106,7 +106,7 @@ footer{border-top:1px solid var(--hair);margin-top:60px;padding-top:24px;font-si
     <p class="eyebrow">zunivo · the payment layer for ai agents on arc</p>
     <h1>x402 payments on Arc</h1>
     <p class="lead">Charge USDC per API call. Let AI agents pay for it autonomously — no card, no account, no human. Standard <a href="https://github.com/coinbase/x402" target="_blank" rel="noreferrer">x402</a> on Arc's USDC-native chain.</p>
-    <p><span class="pill ok">server middleware</span><span class="pill ok">agent client</span><span class="pill">EIP-3009 facilitator</span><span class="pill">Arc Testnet</span></p>
+    <p><span class="pill ok">server middleware</span><span class="pill ok">agent client</span><span class="pill">EIP-3009 facilitator</span><span class="pill ok">Arc mainnet</span><span class="pill">testnet sandbox</span></p>
 
     <h2 id="what">What is this</h2>
     <p><strong>x402</strong> is the HTTP-native payment standard that revives the dormant <code>402 Payment Required</code> status code. A server answers a request with <code>402</code> and a machine-readable price; a client attaches a signed payment and retries; the resource is served. It's governed by the Linux Foundation and backed by Coinbase, Circle, Visa, Stripe, and Google — tens of millions of agent payments already run on it.</p>
@@ -152,13 +152,13 @@ app.<span class="f">get</span>(<span class="s">"/v1/data"</span>, pay, (req, res
   <span class="s">"x402Version"</span>: <span class="n">1</span>,
   <span class="s">"accepts"</span>: [{
     <span class="s">"scheme"</span>: <span class="s">"exact"</span>,
-    <span class="s">"network"</span>: <span class="s">"arc-testnet"</span>,
+    <span class="s">"network"</span>: <span class="s">"arc"</span>,                 <span class="c">// also listed as CAIP-2 "eip155:5042"; sandbox: "arc-testnet" / "eip155:5042002"</span>
     <span class="s">"maxAmountRequired"</span>: <span class="s">"50000"</span>,        <span class="c">// 0.05 USDC in 6-decimal base units</span>
     <span class="s">"asset"</span>: <span class="s">"0x3600000000000000000000000000000000000000"</span>,
     <span class="s">"payTo"</span>: <span class="s">"you.agent"</span>,
     <span class="s">"maxTimeoutSeconds"</span>: <span class="n">120</span>,
     <span class="s">"extra"</span>: {
-      <span class="s">"name"</span>: <span class="s">"USDC"</span>, <span class="s">"decimals"</span>: <span class="n">6</span>, <span class="s">"chainId"</span>: <span class="n">5042002</span>,
+      <span class="s">"name"</span>: <span class="s">"USDC"</span>, <span class="s">"decimals"</span>: <span class="n">6</span>, <span class="s">"chainId"</span>: <span class="n">5042</span>,
       <span class="s">"zunivoOrderId"</span>: <span class="s">"02e2b580-…"</span>,     <span class="c">// order minted for this call — pay it, then retry with proof</span>
       <span class="s">"payToAddress"</span>: <span class="s">"0x6963…90c8"</span>,     <span class="c">// payTo resolved to its 20-byte address — settle to THIS, not the name</span>
       <span class="s">"payUrl"</span>: <span class="s">"https://app.zunivo.io/pay?oid=…"</span>  <span class="c">// human-payable fallback for the same order</span>
@@ -243,12 +243,12 @@ app.<span class="f">get</span>(<span class="s">"/v1/data"</span>, pay, (req, res
     <div class="callout warn" style="--n:#E8A23D"><span class="lbl">critical</span>Arc's <strong>native USDC gas token uses 18 decimals</strong>; the <strong>USDC ERC-20 interface uses 6 decimals</strong>. x402 amounts are ERC-20 amounts → always 6 decimals. Mixing them mis-scales a payment by 10¹². This library keeps the two paths strictly separate; if you compute amounts yourself, use <code>toUsdcBaseUnits()</code> / <code>fromUsdcBaseUnits()</code>.</div>
 
     <h2 id="mainnet">Going to mainnet (money-safety)</h2>
-    <p>On testnet the SDK defaults are convenient. On <strong>mainnet you are moving real USDC</strong>, so the library refuses unsafe defaults and requires you to opt in to three guards explicitly. Zunivo is non-custodial — funds move wallet → on-chain router → recipient; the platform never holds them — but these guards protect against the mistakes and hostile inputs that <em>can</em> cost real money.</p>
+    <p>Since <strong>1.0.0 the SDK defaults to Arc mainnet</strong> (<code>network: "arc"</code>); pass <code>"arc-testnet"</code> for the free sandbox. On <strong>mainnet you are moving real USDC</strong>, so the library refuses unsafe defaults and requires you to opt in to three guards explicitly. Zunivo is non-custodial — funds move wallet → on-chain router → recipient; the platform never holds them — but these guards protect against the mistakes and hostile inputs that <em>can</em> cost real money.</p>
 
     <div class="callout warn" style="--n:#E8A23D"><span class="lbl">before real money</span>Two gates are <strong>not</strong> covered by this library and must be cleared first: an <strong>independent security audit</strong> of the SDK and the on-chain contracts, and <strong>on-chain confirmation of the EIP-3009 path on Arc mainnet</strong>. Until the 3009 path is confirmed, keep it disabled and settle via the Zunivo-order router backend.</div>
 
     <h3 id="mn-network">1. Select the network explicitly</h3>
-    <p>Nothing is hardcoded to one environment. Pass <code>network</code> on both the server and the agent. The SDK <strong>refuses to run on <code>"arc"</code> until the mainnet constants (chain id, RPC, USDC address, router) are filled in</strong> from Arc's mainnet docs — a half-configured mainnet can never silently move funds. The agent also rejects a 402 whose <code>network</code> doesn't match its own, so it can't be tricked onto the wrong chain.</p>
+    <p>Nothing is hardcoded to one environment. Pass <code>network</code> on both the server and the agent (<code>"arc"</code> is the default, <code>"arc-testnet"</code> the sandbox; the CAIP-2 forms <code>"eip155:5042"</code> / <code>"eip155:5042002"</code> are accepted too). The agent rejects a 402 whose <code>network</code> doesn't match its own, so it can't be tricked onto the wrong chain — a mainnet agent will never pay a testnet quote or vice-versa.</p>
     <pre><code><span class="c">// server</span>
 <span class="k">const</span> pay = <span class="f">paymentRequired</span>({ price: <span class="s">"0.05"</span>, payTo: <span class="s">"you.agent"</span>, network: <span class="s">"arc"</span>, consumedStore });
 
@@ -271,19 +271,21 @@ app.<span class="f">get</span>(<span class="s">"/v1/data"</span>, pay, (req, res
   requireExpectRecipient: <span class="k">true</span>,   <span class="c">// and refuse to run without a pin</span>
 });</code></pre>
 
-    <div class="callout" style="--n:#3D5AFE"><span class="lbl">also re-confirm on mainnet</span>Don't assume mainnet equals testnet: verify Arc mainnet's chain id, RPC, USDC ERC-20 address and its decimals on-chain before filling the mainnet config. A wrong decimals assumption mis-scales every amount.</div>
+    <div class="callout" style="--n:#3D5AFE"><span class="lbl">dedicated RPC</span>The public Arc gateway rate-limits under real concurrency. In production set <code>ZUNIVO_MAINNET_RPC_URL</code> to your own endpoint; the SDK puts it first.</div>
 
-    <h2 id="arc">Arc Testnet constants</h2>
+    <h2 id="arc">Arc constants</h2>
     <table>
-      <tr><th>Field</th><th>Value</th></tr>
-      <tr><td>Chain ID</td><td><code>5042002</code></td></tr>
-      <tr><td>RPC</td><td><code>https://rpc.testnet.arc.network</code></td></tr>
-      <tr><td>Explorer</td><td><code>https://testnet.arcscan.app</code></td></tr>
-      <tr><td>USDC (ERC-20, 6 dp)</td><td><code>0x3600000000000000000000000000000000000000</code></td></tr>
-      <tr><td>Zunivo router</td><td><code>0x4210D40a9899e42b4946B9dC7E0C35d3cf14Ea55</code></td></tr>
-      <tr><td>Zunivo names (.agent)</td><td><code>0x244e0c8bE1Ed59636901F98920413d414B158cc5</code></td></tr>
-      <tr><td>x402 network id</td><td><code>arc-testnet</code></td></tr>
-      <tr><td>Faucet</td><td><a href="https://faucet.circle.com/" target="_blank" rel="noreferrer">faucet.circle.com</a></td></tr>
+      <tr><th>Field</th><th>Mainnet (<code>"arc"</code>, default)</th><th>Testnet sandbox (<code>"arc-testnet"</code>)</th></tr>
+      <tr><td>Chain ID</td><td><code>5042</code> · <code>eip155:5042</code></td><td><code>5042002</code> · <code>eip155:5042002</code></td></tr>
+      <tr><td>RPC</td><td><code>https://rpc.mainnet.arc.io</code></td><td><code>https://rpc.testnet.arc.network</code></td></tr>
+      <tr><td>Explorer</td><td><a href="https://arc.etherscan.io" target="_blank" rel="noreferrer">arc.etherscan.io</a></td><td><code>https://testnet.arcscan.app</code></td></tr>
+      <tr><td>USDC (ERC-20, 6 dp)</td><td colspan="2"><code>0x3600000000000000000000000000000000000000</code> (same on both)</td></tr>
+      <tr><td>Zunivo router</td><td><a href="https://arc.etherscan.io/address/0xAa8c293495446d04a51A32e2e4557EDE3BfC7119" target="_blank" rel="noreferrer"><code>0xAa8c293495446d04a51A32e2e4557EDE3BfC7119</code></a></td><td><code>0x4210D40a9899e42b4946B9dC7E0C35d3cf14Ea55</code></td></tr>
+      <tr><td>Zunivo names (.agent)</td><td><a href="https://arc.etherscan.io/address/0x824218447E8Dbf10E535dC7fB6ab7b68105c7dDa" target="_blank" rel="noreferrer"><code>0x824218447E8Dbf10E535dC7fB6ab7b68105c7dDa</code></a></td><td><code>0x244e0c8bE1Ed59636901F98920413d414B158cc5</code></td></tr>
+      <tr><td>Agent records</td><td><a href="https://arc.etherscan.io/address/0xFE9fca63CaA64FBf0B2F089786A706f0C99dCbB1" target="_blank" rel="noreferrer"><code>0xFE9fca63CaA64FBf0B2F089786A706f0C99dCbB1</code></a></td><td><code>0x4f405f0aA04FD6FaE0838DeE6FD184B1f3cC306B</code></td></tr>
+      <tr><td>Zunivo API</td><td><code>https://api.zunivo.io</code></td><td><code>https://testnet-api.zunivo.io</code></td></tr>
+      <tr><td>App</td><td><code>https://app.zunivo.io</code></td><td><code>https://testnet.zunivo.io</code></td></tr>
+      <tr><td>Funding</td><td>real USDC — bridge in via CCTP</td><td><a href="https://faucet.circle.com/" target="_blank" rel="noreferrer">faucet.circle.com</a></td></tr>
     </table>
 
     <footer>
