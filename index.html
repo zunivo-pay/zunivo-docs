@@ -103,14 +103,14 @@ footer{border-top:1px solid var(--hair);margin-top:60px;padding-top:24px;font-si
   </aside>
 
   <main>
-    <p class="eyebrow">zunivo · the payment layer for ai agents on arc</p>
+    <p class="eyebrow">zunivo · x402 on arc</p>
     <h1>x402 payments on Arc</h1>
-    <p class="lead">Charge USDC per API call. Let AI agents pay for it autonomously — no card, no account, no human. Standard <a href="https://github.com/coinbase/x402" target="_blank" rel="noreferrer">x402</a> on Arc's USDC-native chain.</p>
+    <p class="lead">Charge USDC per API call and let an agent pay for it without a human in the loop. Standard <a href="https://github.com/coinbase/x402" target="_blank" rel="noreferrer">x402</a>, settled on Arc.</p>
     <p><span class="pill ok">server middleware</span><span class="pill ok">agent client</span><span class="pill">EIP-3009 facilitator</span><span class="pill ok">Arc mainnet</span><span class="pill">testnet sandbox</span></p>
 
     <h2 id="what">What is this</h2>
-    <p><strong>x402</strong> is the HTTP-native payment standard that revives the dormant <code>402 Payment Required</code> status code. A server answers a request with <code>402</code> and a machine-readable price; a client attaches a signed payment and retries; the resource is served. It's governed by the Linux Foundation and backed by Coinbase, Circle, Visa, Stripe, and Google — tens of millions of agent payments already run on it.</p>
-    <p>But its facilitators cover Base, Polygon, Arbitrum, and Solana — <strong>not Arc</strong>. <code>zunivo-x402-arc</code> is that missing piece: it lets an x402-speaking agent pay for an API <strong>on Arc</strong>, using Arc's USDC-native gas and sub-second finality. Same standard the agent already knows; a new chain it can now pay on.</p>
+    <p><strong>x402</strong> is a payment standard built on the HTTP <code>402 Payment Required</code> status code. The server answers with 402 and a machine-readable price, the client attaches a payment and retries, the server returns the resource. It's governed by the Linux Foundation and used by Coinbase, Circle and others.</p>
+    <p>The public facilitators cover Base, Polygon, Arbitrum and Solana but <strong>not Arc</strong>. <code>zunivo-x402-arc</code> fills that gap: an x402 client can pay for an API on Arc, where gas is in USDC and blocks are sub-second.</p>
 
     <h2 id="how">How x402 works</h2>
     <div class="flow">
@@ -168,7 +168,7 @@ app.<span class="f">get</span>(<span class="s">"/v1/data"</span>, pay, (req, res
     <div class="callout" style="--n:#3D5AFE"><span class="lbl">writing your own client?</span>Settle to <code>extra.payToAddress</code> (the resolved 20-byte address), never to <code>payTo</code> when it is a <code>.agent</code> name — the chain only accepts addresses. Our SDK client does this for you since <code>0.1.1</code>.</div>
 
     <h2 id="agent">Agent — pay automatically</h2>
-    <p>The whole dance — discover price, pay on Arc, retry with proof — is one wrapped <code>fetch</code>:</p>
+    <p>Getting the price, paying on Arc and retrying with proof is one wrapped <code>fetch</code>:</p>
     <pre><code><span class="k">import</span> { createX402Fetch } <span class="k">from</span> <span class="s">"zunivo-x402-arc/client"</span>;
 
 <span class="k">const</span> x402fetch = <span class="f">createX402Fetch</span>({
@@ -181,7 +181,7 @@ app.<span class="f">get</span>(<span class="s">"/v1/data"</span>, pay, (req, res
 <span class="k">const</span> data = <span class="k">await</span> res.<span class="f">json</span>();   <span class="c">// paid for, on-chain, no human</span></code></pre>
 
     <h2 id="discovery">.agent service discovery</h2>
-    <p>A <code>.agent</code> name is more than a payment address — its holder can publish an on-chain <strong>agent card</strong> (endpoint, x402 manifest, description) via the <code>ZunivoAgentRecords</code> contract. That turns a name into a discoverable, callable, payable service. An agent goes from a human-readable name to a paid call in two lines:</p>
+    <p>The holder of a <code>.agent</code> name can publish an <strong>agent card</strong> (endpoint, x402 manifest, description) through the <code>ZunivoAgentRecords</code> contract. Another agent can then go from the name to a paid call in two lines:</p>
     <pre><code><span class="k">import</span> { connectAgent } <span class="k">from</span> <span class="s">"zunivo-x402-arc"</span>;
 
 <span class="k">const</span> svc = <span class="k">await</span> <span class="f">connectAgent</span>(<span class="s">"data.agent"</span>, { privateKey: process.env.AGENT_PK });
@@ -225,7 +225,7 @@ app.<span class="f">get</span>(<span class="s">"/v1/data"</span>, pay, (req, res
       <tr><td><strong>Zunivo orders</strong> (default)</td><td>Payment settles through our verified Arc router <code>0x4210…Ea55</code>. <code>X-PAYMENT</code> payload is <code>{ zunivoOrderId }</code>.</td><td><span class="pill ok">works today</span></td></tr>
       <tr><td><strong>EIP-3009 facilitator</strong></td><td>Agent signs a <code>TransferWithAuthorization</code>; the facilitator submits it to Arc's USDC. Fully standard, gasless.</td><td><span class="pill">reference</span></td></tr>
     </table>
-    <div class="callout"><span class="lbl">why two</span>The Zunivo-order backend needs no new on-chain code and is verified end-to-end today. The EIP-3009 path is the purest x402 scheme; it's provided as a reference so standard agents interoperate, pending on-chain confirmation of Arc USDC's 3009 selectors.</div>
+    <div class="callout"><span class="lbl">why two</span>The Zunivo-order backend needs no new on-chain code and is verified end-to-end today. The EIP-3009 path is the standard x402 scheme; it's provided as a reference so standard agents interoperate, pending on-chain confirmation of Arc USDC's 3009 selectors.</div>
 
     <h2 id="eip3009">EIP-3009 (gasless, advanced)</h2>
     <p>Arc's USDC is issued by Circle and supports <a href="https://eips.ethereum.org/EIPS/eip-3009" target="_blank" rel="noreferrer">EIP-3009</a> (<code>TransferWithAuthorization</code>) — the same mechanism x402 uses elsewhere. The agent signs off-chain; a facilitator submits on-chain; no prior approval, no gas for the agent.</p>
@@ -289,7 +289,7 @@ app.<span class="f">get</span>(<span class="s">"/v1/data"</span>, pay, (req, res
     </table>
 
     <footer>
-      <p>Zunivo — the payment layer for AI agents on Arc · <a href="https://zunivo.io">zunivo.io</a> · <a href="https://github.com/zunivo-pay" target="_blank" rel="noreferrer">github.com/zunivo-pay</a> · non-custodial software, not a money transmitter</p>
+      <p>Zunivo · USDC payments on Arc · <a href="https://zunivo.io">zunivo.io</a> · <a href="https://github.com/zunivo-pay" target="_blank" rel="noreferrer">github.com/zunivo-pay</a> · non-custodial software, not a money transmitter</p>
     </footer>
   </main>
 </div>
